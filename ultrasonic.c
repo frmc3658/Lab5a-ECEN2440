@@ -12,10 +12,15 @@
 //static void add_scheduled_event(timer_a2_callback);
 static volatile uint32_t capture_values[CAP_VALS];
 
-uint32_t ultrasonic_calc_distance_cm(uint32_t *cap_vals)
+uint32_t ultrasonic_calc_distance_cm(volatile uint32_t *cap_vals)
 {
+    uint32_t ticks = cap_vals[1] - cap_vals[2];
+
+    // TODO: convert ticks to time
+    uint32_t time;
+
+    // TODO: calculate distance
     uint32_t dist;
-    dist = *cap_vals;
 
     if(dist >= ERR_LESS_THAN_MIN_DIST)
     {
@@ -26,14 +31,14 @@ uint32_t ultrasonic_calc_distance_cm(uint32_t *cap_vals)
         }
         else
         {
-            // return error
-            return 401;
+            // TODO: handle return error
+            return 1;
         }
     }
     else
     {
-        // return error
-        return 1;
+        // TODO: handle return error
+        return 0;
     }
 }
 
@@ -96,8 +101,37 @@ void TA2_N_IRQHandler(void)
     uint16_t flags;
     flags = TIMER_A2->CCTL[3];
 
-    // lower interrupt flag
+    // lower interrupt flags
     TIMER_A2->CTL &= ~TIMER_A_CTL_IFG;
+    TIMER_A2->CCTL[3] &= ~TIMER_A_CCTLN_CCIFG;
 
-    if(P6->)
+    // handle CCTL[3] interrupt
+    // if CCI is HIGH ...
+    if(flags & TIMER_A_CCTLN_CCI)
+    {
+        // ...  clear COV bit
+        TIMER_A2->CCTL[3] &= ~TIMER_A_CCTLN_COV;
+
+        // store CCR3 value
+        capture_values[0] = TIMER_A2->CCR[3];
+    }
+
+    // ... if CCI is LOW ...
+    if(!(flags & TIMER_A_CCTLN_CCI))
+    {
+        // check if overflow bit set...
+        if(flags & TIMER_A_CCTLN_COV)
+        {
+            // calculate capture value
+            capture_values[1] = TIMER_A2->CCR[3] + MAX_TICKS;
+        }
+        // ... overflow bit not set ...
+        else
+        {
+            // set capture value
+            capture_values[1] = TIMER_A2->CCR[3];
+        }
+    }
+
+    ultrasonic_calc_distance_cm(capture_values);
 }
