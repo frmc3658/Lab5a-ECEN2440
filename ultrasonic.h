@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#define CAP_VALS            1
+
 
 typedef struct
 {
@@ -29,6 +31,10 @@ typedef struct
 
 uint32_t ultrasonic_calc_distance_cm(uint32_t *cap_vals);
 void timer_a_0_init_trig(void);
+void timer_a_2_init_measure_echo_cci(void);
+
+void config_timer_a2(void);
+void enable_NVIC_TA2(void);
 
 
 #endif

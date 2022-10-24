@@ -22,8 +22,8 @@ void pwm_open(void)
     // configure timer_a for PWM operation
     config_pwm_timer();
 
-    // configure P2.5 for PWM
-    config_gpio();
+    // configure P2.5 for TA0
+    config_gpio_timera0();
 
     // enable NVIC
     config_nvic();
@@ -96,7 +96,7 @@ void TA0_N_IRQHandler(void)
 }
 
 
-void config_gpio(void)
+void config_gpio_timera0(void)
 {
     // set P2.5 as output (TRM 12.2.3)
     P2->DIR |= BIT5;
@@ -108,3 +108,4 @@ void config_gpio(void)
     // set OUT register to low (TRM 12.2.2)
     P2->OUT &= ~(BIT5);
 }
+

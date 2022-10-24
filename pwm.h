@@ -3,9 +3,6 @@
  *
  */
 
-//***************************************************************
-// header guards
-//**************************************************************/
 #ifndef PWM_H_
 #define PWM_H_
 
@@ -28,7 +25,7 @@ void pwm_open(void);
 void stop_pwm(void);
 void start_pwm(void);
 void config_pwm_timer(void);
-void config_gpio(void);
+void config_gpio_timera0(void);
 
 //***************************************************************
 // nvic-nested vector interrupt controller
