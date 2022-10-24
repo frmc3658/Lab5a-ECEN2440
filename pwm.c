@@ -25,14 +25,8 @@ void pwm_open(void)
     // configure P2.4 for PWM
     config_gpio();
 
-    // configure 2.3 for PWM
-    //config_gpio_int();
-
     // enable NVIC
     config_nvic();
-
-
-    config_pwm_timer_10mics();
 
     // start PWM timer
     start_pwm();
@@ -76,27 +70,31 @@ void config_pwm_timer(void)
     // set capture/compare register 0 value
     TIMER_A0 -> CCR[0] = TICKS;
 
-    //capture compare interrupt enable
+    // capture compare interrupt enable
     TIMER_A0->CCTL[1] |= TIMER_A_CCTLN_CCIE;
+
+    // Set CCR1 to value for 10ms
+    TIMER_A0->CCR[1] = CCR1_DUTY_10mics;
 }
 
 void config_nvic(void)
 {
+    // enable interrupts
     __NVIC_EnableIRQ(TA0_N_IRQn);
 }
 
 void TA0_N_IRQHandler(void)
 {
+    // stop PWM
     stop_pwm();
+
+    // disable interrupts
     __NVIC_DisableIRQ(TA0_N_IRQn);
+
+    // lower capture/compare flag
     TIMER_A0->CCTL[1] &= ~TIMER_A_CCTLN_CCIFG;
 }
 
-
-void config_pwm_timer_10mics(void)
-{
-    TIMER_A0->CCR[1] = CCR1_DUTY_10mics;
-}
 
 void config_gpio(void)
 {
@@ -110,11 +108,3 @@ void config_gpio(void)
     // set OUT register to low (TRM 12.2.2)
     P2->OUT &= ~(BIT5);
 }
-
-void config_gpio_int(void)
-{
-    P2->DIR |= BIT3;
-    P2->OUT |= BIT3;
-    P2->DS |= BIT3;
-}
-
