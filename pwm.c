@@ -22,7 +22,7 @@ void pwm_open(void)
     // configure timer_a for PWM operation
     config_pwm_timer();
 
-    // configure P2.4 for PWM
+    // configure P2.5 for PWM
     config_gpio();
 
     // enable NVIC
