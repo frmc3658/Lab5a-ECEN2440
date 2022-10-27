@@ -6,8 +6,8 @@
 .project
 .gitignore.*
 msp432p4111.cmd
-startup_msp*
-system_msp*
+startup_msp432p4111_ccs.c
+system_msp432p4111.c
 */Release/
 */.xdchelp
 **/.config
