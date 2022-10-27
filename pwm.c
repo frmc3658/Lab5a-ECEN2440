@@ -29,6 +29,9 @@ void pwm_open(void)
     // enable NVIC
     config_nvic();
 
+    // Set CCR1 to value for 10ms
+    TIMER_A0->CCR[2] = CCR1_DUTY_10mics;
+
     // start PWM timer
     start_pwm();
 
@@ -39,7 +42,7 @@ void pwm_open(void)
 
 void start_pwm(void)
 {
-    // set MC to up mode
+    // set TA0 to up mode
     TIMER_A0->CTL |= TIMER_A_CTL_MC__UP;
 }
 
@@ -63,19 +66,16 @@ void config_pwm_timer(void)
     TIMER_A0->CTL |= TIMER_A_CTL_ID__1;
 
     // intermediary state; see note at bottom of page (TRM 19.2.5.1.3)
-    TIMER_A0 -> CCTL[1] |= TIMER_A_CCTLN_OUTMOD_7;
+    TIMER_A0-> CCTL[2] |= TIMER_A_CCTLN_OUTMOD_7;
 
     // Set/Reset mode
-    TIMER_A0 -> CCTL[1] &= TIMER_A_CCTLN_OUTMOD_3;
+    TIMER_A0-> CCTL[2] &= TIMER_A_CCTLN_OUTMOD_3;
 
     // set capture/compare register 0 value
-    TIMER_A0 -> CCR[0] = TICKS;
+    TIMER_A0-> CCR[0] = TICKS;
 
     // capture compare interrupt enable
-    TIMER_A0->CCTL[1] |= TIMER_A_CCTLN_CCIE;
-
-    // Set CCR1 to value for 10ms
-    TIMER_A0->CCR[1] = CCR1_DUTY_10mics;
+    TIMER_A0->CCTL[2] |= TIMER_A_CCTLN_CCIE;
 }
 
 void config_nvic(void)
@@ -93,7 +93,7 @@ void TA0_N_IRQHandler(void)
     __NVIC_DisableIRQ(TA0_N_IRQn);
 
     // lower capture/compare flag
-    TIMER_A0->CCTL[1] &= ~TIMER_A_CCTLN_CCIFG;
+    TIMER_A0->CCTL[2] &= ~TIMER_A_CCTLN_CCIFG;
 }
 
 

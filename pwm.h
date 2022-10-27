@@ -16,7 +16,7 @@
 // defined macros
 //**************************************************************/
 #define TICKS                   ((uint16_t) 0x12C)  //300
-#define CCR1_DUTY_10mics        ((uint16_t) 0x10E)  //370
+#define CCR1_DUTY_10mics        ((uint16_t) 0x10E)  //270
 
 //***************************************************************
 // function prototypes

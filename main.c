@@ -12,13 +12,10 @@ void main(void)
     WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
 
     pwm_open();
-
-    // TODO: gpio_open()
+    ultrasonic_open();
 
     while(1)
     {
-        // TODO: call ultrasonic_calc_dist_cm()
 
-        // TODO: print calculated distance
     }
 }

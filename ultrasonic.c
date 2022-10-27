@@ -2,136 +2,160 @@
  * ultrasoni.c
  *
  *  Created on: Oct 17, 2022
- *      Author: fjmcd
+ *      Author:
  */
 
 #include "ultrasonic.h"
-#include "msp.h"
 
 
 //static void add_scheduled_event(timer_a2_callback);
 static volatile uint32_t capture_values[CAP_VALS];
 
-uint32_t ultrasonic_calc_distance_cm(volatile uint32_t *cap_vals)
+
+float ultrasonic_calc_distance_cm(volatile uint32_t cap_vals[])
 {
-    uint32_t ticks = cap_vals[1] - cap_vals[2];
+    uint32_t ticks = cap_vals[1] - cap_vals[0];
 
-    // TODO: convert ticks to time
-    uint32_t time;
+    // convert ticks to time (s)
+    double time = (ticks / TIMER_A_CTL_SSEL__SMCLK) * 0.000001;
 
-    // TODO: calculate distance
-    uint32_t dist;
 
-    if(dist >= ERR_LESS_THAN_MIN_DIST)
+    // calculate distance (cm)
+    float dist = (time * SPEED) / ECHO;
+
+    if(dist >= MIN_DIST)
     {
-        if(dist <= ERR_GREATER_THAN_MAX_DIST)
+        if(dist <= MAX_DIST)
         {
             // return calculated distance
             return dist;
         }
         else
         {
-            // TODO: handle return error
-            return 1;
+            // return error
+            return ERROR_OUT_OF_RANGE;
         }
     }
     else
     {
-        // TODO: handle return error
-        return 0;
+        // return error
+        return ERROR_OUT_OF_RANGE;
     }
 }
 
 
-void timer_a_0_init_trig(void)
-{
-
-}
-
-void timer_a_2_init_measure_echo_cci(void)
-{
-    // set P6.6 as input
-    P6->DIR &= ~BIT6;
-
-    // selecting primary function for TA2.3
-    P6->SEL0 |= BIT6;
-    P6->SEL1 &= ~BIT6;
-
-    enable_NVIC_TA2();
-}
-
 void config_timer_a2(void)
 {
+    // disable interrupts
+        __NVIC_DisableIRQ(TA2_N_IRQn);
+
+    // stop timer
+    TIMER_A2->CTL = TIMER_A_CTL_MC_0;
+
     // clear R register
     TIMER_A2->CTL |= TIMER_A_CTL_CLR;
 
     // select clock source
     TIMER_A2->CTL |= TIMER_A_CTL_SSEL__SMCLK;
 
-    // set continuous mode
-    TIMER_A2 -> CTL &= TIMER_A_CTL_MC__CONTINUOUS;
-
-    // enable interrupts
-    TIMER_A2->CTL |= TIMER_A_CTL_IE;
-
-    // set capture mode for rising and falling edges (TRM 19.3.3)
-    TIMER_A2->CCTL[3] |= TIMER_A_CCTLN_CM__BOTH;
+    // set input divider
+    TIMER_A2->CTL |= TIMER_A_CTL_ID__1;
 
     // set capture/compare input select
     TIMER_A2->CCTL[3] |= TIMER_A_CCTLN_CCIS__CCIA;
 
+    // synchronize capture source
+    TIMER_A2->CCTL[3] |= TIMER_A_CCTLN_SCS;
+
     // set capture mode
     TIMER_A2->CCTL[3] |= TIMER_A_CCTLN_CAP;
+
+    // set capture mode for rising and falling edges (TRM 19.3.3)
+    TIMER_A2->CCTL[3] |= TIMER_A_CCTLN_CM__BOTH;
 
     // enable interrupt flags
     TIMER_A2->CCTL[3] |= TIMER_A_CCTLN_CCIE;
 
     // clear interrupt flag register
     TIMER_A2->CCTL[3] &= ~TIMER_A_CCTLN_CCIFG;
+
+    // enable interrupts
+    TIMER_A2->CTL |= TIMER_A_CTL_IE;
+    enable_NVIC_TA2();
 }
+
 
 void enable_NVIC_TA2(void)
 {
     __NVIC_EnableIRQ(TA2_N_IRQn);
 }
 
+void ultrasonic_open(void)
+{
+    config_gpio_timera2();
+    config_timer_a2();
+    timer_a2_start();
+
+    __enable_interrupt();
+}
+
+void timer_a2_start(void)
+{
+    // set TA2 continuous mode
+    TIMER_A2 ->CTL |= TIMER_A_CTL_MC__CONTINUOUS;
+}
+
 void TA2_N_IRQHandler(void)
 {
-    // store state of CCTL register
-    uint16_t flags;
-    flags = TIMER_A2->CCTL[3];
-
-    // lower interrupt flags
+    // lower interrupts
     TIMER_A2->CTL &= ~TIMER_A_CTL_IFG;
     TIMER_A2->CCTL[3] &= ~TIMER_A_CCTLN_CCIFG;
 
+    // store state of CCTL register
+    uint16_t cctl_state = TIMER_A2->CCTL[3];
+    uint32_t cctl_r = TIMER_A2->R;
+
     // handle CCTL[3] interrupt
     // if CCI is HIGH ...
-    if(flags & TIMER_A_CCTLN_CCI)
+    if(cctl_state & TIMER_A_CCTLN_CCI)
     {
-        // ...  clear COV bit
-        TIMER_A2->CCTL[3] &= ~TIMER_A_CCTLN_COV;
-
         // store CCR3 value
-        capture_values[0] = TIMER_A2->CCR[3];
+        capture_values[0] = cctl_r;
     }
 
     // ... if CCI is LOW ...
-    if(!(flags & TIMER_A_CCTLN_CCI))
+    if(!(cctl_state & TIMER_A_CCTLN_CCI))
     {
         // check if overflow bit set...
-        if(flags & TIMER_A_CCTLN_COV)
+        if(cctl_state & TIMER_A_CCTLN_COV)
         {
+            // ...  clear COV bit
+            TIMER_A2->CCTL[3] &= ~TIMER_A_CCTLN_COV;
+
             // calculate capture value
-            capture_values[1] = TIMER_A2->CCR[3] + MAX_TICKS;
+            capture_values[1] = cctl_r + MAX_TICKS;
         }
         // ... overflow bit not set ...
         else
         {
             // set capture value
-            capture_values[1] = TIMER_A2->CCR[3];
+            capture_values[1] = cctl_r;
         }
-    }
 
-    ultrasonic_calc_distance_cm(capture_values);
+        float calc_dist = ultrasonic_calc_distance_cm(capture_values);
+
+        if(calc_dist == ERROR_OUT_OF_RANGE)
+        {
+            printf("ERROR: Calculated distances out of bounds\n");
+        }
+        else
+        {
+            printf("Calculuated distance: %f\n", calc_dist);
+        }
+
+        pwm_open();
+
+        TIMER_A2->CCTL[3] = cctl_state;
+        TIMER_A2->R = cctl_r;
+    }
 }
