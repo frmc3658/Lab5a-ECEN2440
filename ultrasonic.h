@@ -17,6 +17,7 @@
 #define CAP_VALS            2                       // number of capture values
 #define MAX_TICKS           ((uint16_t) 0XFFFF)     // max value of ticks is 65535
 #define SPEED               0x85FC                  // 34300 cm/s; speed of sound assuming dry air @ 68°F
+#define MICRO_S_TO_SEC      0XF4240                 // divide by 1,000,000 to convert micro_s to s
 #define ECHO                2                       // divide echo length by 2
 #define MIN_DIST            (uint32_t)0X02          // 2cm
 #define MAX_DIST            (uint32_t)0X190         // 400cm

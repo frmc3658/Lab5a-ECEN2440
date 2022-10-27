@@ -17,7 +17,7 @@ float ultrasonic_calc_distance_cm(volatile uint32_t cap_vals[])
     uint32_t ticks = cap_vals[1] - cap_vals[0];
 
     // convert ticks to time (s)
-    double time = (ticks / TIMER_A_CTL_SSEL__SMCLK) * 0.000001;
+    double time = (ticks / TIMER_A_CTL_SSEL__SMCLK) / MICRO_S_TO_SEC;
 
 
     // calculate distance (cm)
