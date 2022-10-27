@@ -4,11 +4,14 @@
 .ccsproject
 .cproject
 .project
+.gitignore.*
 msp432p4111.cmd
+startup_msp*
+system_msp*
 */Release/
 */.xdchelp
 **/.config
-**/.config/
+**/.config
 */.launches
 **/.launches/
 */targetConfigs
