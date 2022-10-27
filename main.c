@@ -1,12 +1,31 @@
 /**
  * main.c
+ *
+ *  Authors: Brendan N, Frank M, Shane M
  */
 
-#include "msp.h"
-#include "ultrasonic.h"
-#include "pwm.h"
-#include <stdio.h>
+//***************************************************************
+// included files
+//**************************************************************/
+/* System include statements */
+#include <stdbool.h>
 
+/* Texas Instruments includes */
+#include "msp.h"
+
+/* Developer includes */
+#include "pwm.h"
+#include "ultrasonic.h"
+
+
+//***************************************************************
+// static variables
+//**************************************************************/
+
+
+//***************************************************************
+// main function
+//**************************************************************/
 void main(void)
 {
     WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
@@ -14,7 +33,7 @@ void main(void)
     pwm_open();
     ultrasonic_open();
 
-    while(1)
+    while(true)
     {
 
     }

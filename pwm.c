@@ -1,6 +1,7 @@
 /*
  * pwm.c
  *
+ * Authors: Brendan N, Frank M, Shane M
  */
 
 //***************************************************************
@@ -10,43 +11,44 @@
 
 
 //***************************************************************
+// static variables
+//**************************************************************/
+
+
+//***************************************************************
 // function definitions
 //**************************************************************/
+// open PWM peripheral
 void pwm_open(void)
 {
-    //disables interrupt
+    //disables interrupts
     __disable_interrupt();
 
     // stop timer_a before modifying operation; per: TRM 19.2.1
     stop_pwm();
 
-    // configure timer_a for PWM operation
-    config_pwm_timer();
+    // configure TA0 for PWM operation to function as a trigger signal
+    config_trigger_timer();
 
-    // configure P2.5 for TA0
-    config_gpio_timera0();
+    // configure P2.5 for TA0 trigger operation
+    config_gpio_trigger_timer();
 
-    // enable NVIC
-    config_nvic();
+    // Set CCR1 to value for 10 micro-seconds
+    TIMER_A0->CCR[2] = CCR1_10_MICRO_SEC;
 
-    // Set CCR1 to value for 10ms
-    TIMER_A0->CCR[2] = CCR1_DUTY_10mics;
 
     // start PWM timer
     start_pwm();
 
-    //enable interrupt
+    // enable timer interrupts in NVIC
+    __NVIC_EnableIRQ(TA0_N_IRQn);
+
+    //enable interrupts
     __enable_interrupt();
 }
 
 
-void start_pwm(void)
-{
-    // set TA0 to up mode
-    TIMER_A0->CTL |= TIMER_A_CTL_MC__UP;
-}
-
-
+// stop PWM peripheral
 void stop_pwm(void)
 {
     // set MC to halt/stop mode
@@ -54,7 +56,17 @@ void stop_pwm(void)
 }
 
 
-void config_pwm_timer(void)
+// start PWM peripheral
+void start_pwm(void)
+{
+    // set TA0 to up mode
+    TIMER_A0->CTL |= TIMER_A_CTL_MC__UP;
+}
+
+
+// configure TA0 to function as a trigger for
+// the HC-SR04 Ultrasonic Ranging Module
+void config_trigger_timer(void)
 {
     // clear R register
     TIMER_A0->CTL |= TIMER_A_CTL_CLR;
@@ -78,12 +90,8 @@ void config_pwm_timer(void)
     TIMER_A0->CCTL[2] |= TIMER_A_CCTLN_CCIE;
 }
 
-void config_nvic(void)
-{
-    // enable interrupts
-    __NVIC_EnableIRQ(TA0_N_IRQn);
-}
 
+// TIMER_A0 IRQ Handler stops the timer to prevent signal overlap
 void TA0_N_IRQHandler(void)
 {
     // stop PWM
@@ -94,19 +102,5 @@ void TA0_N_IRQHandler(void)
 
     // lower capture/compare flag
     TIMER_A0->CCTL[2] &= ~TIMER_A_CCTLN_CCIFG;
-}
-
-
-void config_gpio_timera0(void)
-{
-    // set P2.5 as output (TRM 12.2.3)
-    P2->DIR |= BIT5;
-
-    // select primary module function of P2.5 (TRM 12.2.6)
-    P2->SEL0 |= BIT5;
-    P2->SEL1 &= ~BIT5;
-
-    // set OUT register to low (TRM 12.2.2)
-    P2->OUT &= ~(BIT5);
 }
 

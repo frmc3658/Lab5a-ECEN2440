@@ -1,6 +1,7 @@
 /*
  * pwm.h
  *
+ *  Authors: Brendan N, Frank M, Shane M
  */
 
 #ifndef PWM_H_
@@ -9,14 +10,31 @@
 //***************************************************************
 // included files
 //**************************************************************/
+/* System include statements */
+
+/* Texas Instruments includes */
 #include "msp.h"
+
+/* Developer includes */
+#include "gpio.h"
 
 
 //***************************************************************
 // defined macros
 //**************************************************************/
-#define TICKS                   ((uint16_t) 0x12C)  //300
-#define CCR1_DUTY_10mics        ((uint16_t) 0x10E)  //270
+#define TICKS                   ((uint16_t) 0x12C)  // 300
+#define CCR1_10_MICRO_SEC       ((uint16_t) 0x10E)  // 270
+
+
+//***************************************************************
+// enums
+//**************************************************************/
+
+
+//***************************************************************
+// structs
+//**************************************************************/
+
 
 //***************************************************************
 // function prototypes
@@ -24,12 +42,6 @@
 void pwm_open(void);
 void stop_pwm(void);
 void start_pwm(void);
-void config_pwm_timer(void);
-void config_gpio_timera0(void);
-
-//***************************************************************
-// nvic-nested vector interrupt controller
-//**************************************************************/
-void config_nvic(void);
+void config_trigger_timer(void);
 
 #endif /* PWM_H_ */
